@@ -22,7 +22,7 @@ with open(config_file_path, 'r') as f:
 
 def getConfigByQuery(search_key, search_value, keys_to_include) -> dict:
     _found_config = False
-    _configs = config_json['Connections']
+    _configs = config_json['configs']
     for _config_data in _configs:
         if _config_data[search_key] == search_value:
             _found_config = True
@@ -37,16 +37,6 @@ def getConfigByQuery(search_key, search_value, keys_to_include) -> dict:
 def getDictFromJson(json_data, keys_to_include) -> dict:
     config_dict = {key: json_data[key] for key in keys_to_include if key in json_data}
     return config_dict
-
-
-def _getConfigByTitle(config_title) -> list | None:
-    _found_config = None
-    _configs = config_json['configs']
-    for _config in _configs:
-        if _config['title'] == config_title:
-            _found_config = _config
-
-    return _found_config
 
 
 def _getMailConfigByTitle(config_title) -> dict:
@@ -137,13 +127,12 @@ def _send_mail(sender, recipient, subject, content, access_token, content_type="
 
 if __name__ == '__main__':
     
-    #config = _getConfigByTitle(config_title='ftp.zurrose.ch')
-
-    # get the FTP connection settings
+    # get the ftp connection settings
     properties = ['title', 'hostname', 'username', 'password', 'remotepath', 'sshHostKeyFingerprint']
     try:
         config = getConfigByQuery(search_key="title", search_value="ftp.zurrose.ch", keys_to_include=properties)
     except:
+        print(f"error loading the settings for the ftp connection")
         sys.exit(1)
 
     # get email settings
@@ -151,6 +140,7 @@ if __name__ == '__main__':
     try:
         mail_config = getConfigByQuery(search_key="title", search_value="msgraph_api_peter-it_email", keys_to_include=properties)
     except:
+        print(f"error loading the settings for the mail connection")
         sys.exit(1)
 
 
@@ -190,7 +180,8 @@ if __name__ == '__main__':
 
     
     # send the report via msgraph api
-    token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=mail_config['scope'])
+    scopes = [mail_config['scope']] # scope has to be an array
+    token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
     if token is None:
         print("Error getting Access Token:\n", token)
         sys.exit(1)
