@@ -198,8 +198,11 @@ if __name__ == '__main__':
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     subject = f"Medbase verification of Mailbox Inventory sFTP Upload {formatted_datetime}"
+    email_content_txt = f"files on ftp host:   \r\n"
+    for line in message:
+        email_content_txt = email_content_txt + f"{line}  \r\n"
     # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
-    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=message, access_token=token, content_type="Text")
+    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=email_content_txt, access_token=token, content_type="Text")
     if (success == True):
         print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Report sent successfully")
     else:
