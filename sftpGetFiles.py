@@ -171,7 +171,8 @@ if __name__ == '__main__':
                     sftp.get(remote_file_path, local_file_path)
                     os.utime(local_file_path, (remote_atime, remote_mtime))  # Set local file's access and modification times
                     modified = datetime.fromtimestamp(file.st_mtime)
-                    message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
+                    #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
+                    message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
 
     except paramiko.AuthenticationException:
         print("Authentication failed, please check your credentials.")
@@ -185,7 +186,7 @@ if __name__ == '__main__':
             ssh_client.close()
             print("\nSSH connection closed.")
     
-    print("\nremote files:\n")
+    print("\ndownloaded files:\n")
     print(message)
 
     
