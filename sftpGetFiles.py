@@ -203,7 +203,7 @@ if __name__ == '__main__':
                     modified = datetime.fromtimestamp(file.st_mtime)
                     #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
                     message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
-                    message_data_table = message_data_table + f"<td>{file.filename}</td><tr><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>"
+                    rows_html += f"<tr><td>{file.filename}</td><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n"
                     
 
     except paramiko.AuthenticationException:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
     data = {
         'title': subject,
-        'table_rows': message_data_table
+        'table_rows': rows_html
     }
 
     rendered_html = email_template.substitute(data)
