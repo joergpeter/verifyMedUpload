@@ -187,6 +187,7 @@ if __name__ == '__main__':
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
             message = ""
             rows_html = ""
+            rows_data = []
             for file in files:
                 # Filter out directories; only download files
                 if stat.S_ISREG(file.st_mode):
@@ -204,8 +205,9 @@ if __name__ == '__main__':
                     #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
                     message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
                     # rows_html += f"<tr><td>{file.filename}</td><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n"
-                    rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{file.filename}</td><td style="padding: 12px 16px; color: #6b7280;">{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n'
-                    
+                    # rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{file.filename}</td><td style="padding: 12px 16px; color: #6b7280;">{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n'
+                    row_data = {"file_name": file.filename, "modified": modified.strftime('%Y-%m-%d %H:%M:%S')}
+                    rows_data.append(row_data)
 
     except paramiko.AuthenticationException:
         print("Authentication failed, please check your credentials.")
@@ -236,23 +238,10 @@ if __name__ == '__main__':
         sys.exit(1)
     
     
-    '''
-    data = {
-        'title': subject,
-    }
-
-    rendered_html = email_template.substitute(data)
-    message = rendered_html + "\n\n"
-
-    subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
-    # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
-    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=message, access_token=token, content_type="Text")
-    if (success == True):
-        print(f"\nEmail sent successfully")
-    else:
-        print(f"\nERROR sending Email")
-    '''
-
+    # build the message body
+    rows_html = ""
+    for row in rows_data:
+        rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{row["file_name"]}</td><td style="padding: 12px 16px; color: #6b7280;">{row["modified"]}</td></tr>\n'
 
     data = {
         'title': subject,
