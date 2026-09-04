@@ -237,7 +237,7 @@ if __name__ == '__main__':
         rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{row["file_name"]}</td><td style="padding: 12px 16px; color: #6b7280;">{row["modified"]}</td></tr>\n'
 
     data = {
-        'report_title': subject,
+        'report_title': report_title,
         'report_date': report_date,
         'intro_text': intro_text,
         'table_rows': rows_html
