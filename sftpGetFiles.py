@@ -87,6 +87,27 @@ def _get_access_token(tenant_id, client_id, client_secret, scope) -> str | None:
         return None
 
 
+def _send_mail_msgraph_(sender, email_payload, access_token) -> bool:
+    
+    url = f"https://graph.microsoft.com/v1.0/users/{sender}/sendMail"
+    headers = {
+        'Authorization': 'Bearer ' + str(access_token),
+        'Content-Type': 'application/json'
+    }
+
+    # send request
+    response = requests.post(url, headers=headers, json=email_payload)
+
+    # capture response and return to the caller
+    if str(response.status_code) != '202':
+        return False
+    return True
+
+
+
+
+
+
 def _send_mail(sender, recipient, subject, content, access_token, content_type="HTML", save_to_sent_items=True) -> bool:
     
     if sender is not None and recipient is not None and subject is not None and content is not None and access_token is not None:
@@ -221,6 +242,38 @@ if __name__ == '__main__':
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
     # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
     success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=message, access_token=token, content_type="Text")
+    if (success == True):
+        print(f"\nEmail sent successfully")
+    else:
+        print(f"\nERROR sending Email")
+
+
+    data = {
+        'title': subject,
+    }
+
+    rendered_html = email_template.substitute(data)
+
+
+    email_payload = {
+        "message": {
+            "subject": subject,
+            "body": {
+                "contentType": "HTML",  # Tells Graph API to parse HTML instead of plain text
+                "content": rendered_html
+            },
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address": "joerg.peter@mexnet.ch"
+                    }
+                }
+            ]
+        },
+        "saveToSentItems": "true"
+    }
+
+    success = _send_mail_msgraph_(sender="joerg.peter@peter-it.ch", email_payload=email_payload, access_token=token)
     if (success == True):
         print(f"\nEmail sent successfully")
     else:
