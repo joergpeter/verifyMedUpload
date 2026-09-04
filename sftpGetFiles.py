@@ -6,6 +6,7 @@ pip install requests
 
 import paramiko
 import sys, os, json
+from string import Template
 from datetime import datetime
 from paramiko import SSHClient, AutoAddPolicy, SFTPClient
 import stat
@@ -15,6 +16,7 @@ import requests
 # global set static variables
 app_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 downloads_dir = os.path.join(app_path, 'downloads')
+template_dir = os.path.join(app_path, 'templates')
 config_file_path = os.path.join(app_path, 'config.json')
 
 # global get config
@@ -145,6 +147,12 @@ if __name__ == '__main__':
         print(f"error loading the settings for the mail connection")
         sys.exit(1)
 
+    # load the email template
+    template_file_path = os.path.join(template_dir, 'download_report.html')
+    
+    with open(template_file_path, 'r') as template_file:
+        email_template = Template(template_file.read())
+
 
     ssh_client = SSHClient()
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
@@ -191,13 +199,24 @@ if __name__ == '__main__':
 
     
     # send the report via msgraph api
+
+    formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
+    subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
+
+    data = {
+        'title': subject,
+    }
+
+    rendered_html = email_template.substitute(data)
+    message = rendered_html + "\n\n"
+
     scopes = [mail_config['scope']] # scope has to be an array
     token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
     if token is None:
         print("Error getting Access Token:\n", token)
         sys.exit(1)
     
-    formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
+    
 
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
     # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
