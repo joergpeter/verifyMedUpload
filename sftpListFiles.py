@@ -6,13 +6,17 @@ pip install requests
 
 import paramiko
 import sys, os, json
+from string import Template
 from datetime import datetime
 from paramiko import SSHClient, AutoAddPolicy, SFTPClient
+import stat
 import msal
 import requests
 
 # global set static variables
 app_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+downloads_dir = os.path.join(app_path, 'downloads')
+template_dir = os.path.join(app_path, 'templates')
 config_file_path = os.path.join(app_path, 'config.json')
 
 # global get config
@@ -81,6 +85,23 @@ def _get_access_token(tenant_id, client_id, client_secret, scope) -> str | None:
     except Exception as e:
         print("Exception while acquiring token:", str(e))
         return None
+
+
+def _send_mail_msgraph_(sender, email_payload, access_token) -> bool:
+    
+    url = f"https://graph.microsoft.com/v1.0/users/{sender}/sendMail"
+    headers = {
+        'Authorization': 'Bearer ' + str(access_token),
+        'Content-Type': 'application/json'
+    }
+
+    # send request
+    response = requests.post(url, headers=headers, json=email_payload)
+
+    # capture response and return to the caller
+    if str(response.status_code) != '202':
+        return False
+    return True
 
 
 def _send_mail(sender, recipient, subject, content, access_token, content_type="HTML", save_to_sent_items=True) -> bool:
@@ -162,12 +183,12 @@ if __name__ == '__main__':
             #files = sftp.listdir_attr("/")
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
             message = []
+            rows_data = []
             for file in files:
-                #print(f" {file}")
                 modified = datetime.fromtimestamp(file.st_mtime)
-                #print(f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}")
                 message.append(f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}")
-                #message = message + f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
+                row_data = {"file_name": file.filename, "modified": modified.strftime('%Y-%m-%d %H:%M:%S')}
+                rows_data.append(row_data)
 
     except paramiko.AuthenticationException:
         print("Authentication failed, please check your credentials.")
@@ -189,20 +210,51 @@ if __name__ == '__main__':
 
     
     # send the report via msgraph api
+    # load the email template
+    template_file_path = os.path.join(template_dir, 'download_report.html')    
+    with open(template_file_path, 'r') as template_file:
+        email_template = Template(template_file.read())
+
+    formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
+    subject = f"Medbase Mailbox Inventory sFTP Files verification {formatted_datetime}"
+
     scopes = [mail_config['scope']] # scope has to be an array
     token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
     if token is None:
         print("Error getting Access Token:\n", token)
         sys.exit(1)
-    
-    formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    subject = f"Medbase verification of Mailbox Inventory sFTP Upload {formatted_datetime}"
-    email_content_txt = f"files on ftp host:   \r\n"
-    for line in message:
-        email_content_txt = email_content_txt + f"{line}  \r\n"
-    # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
-    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=email_content_txt, access_token=token, content_type="Text")
+    # build the message body
+    rows_html = ""
+    for row in rows_data:
+        rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{row["file_name"]}</td><td style="padding: 12px 16px; color: #6b7280;">{row["modified"]}</td></tr>\n'
+
+    data = {
+        'title': subject,
+        'table_rows': rows_html
+    }
+
+    rendered_html = email_template.substitute(data)
+
+    email_payload = {
+        "message": {
+            "subject": subject,
+            "body": {
+                "contentType": "HTML",  # Tells Graph API to parse HTML instead of plain text
+                "content": rendered_html
+            },
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address": "joerg.peter@mexnet.ch"
+                    }
+                }
+            ]
+        },
+        "saveToSentItems": "true"
+    }
+
+    success = _send_mail_msgraph_(sender="joerg.peter@peter-it.ch", email_payload=email_payload, access_token=token)
     if (success == True):
         print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Report sent successfully")
     else:

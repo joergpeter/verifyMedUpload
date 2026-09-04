@@ -62,7 +62,6 @@ def _getMailConfigByTitle(config_title) -> dict:
         raise ValueError(f"no config with title: {config_title} found")
 
 
-
 def _get_access_token(tenant_id, client_id, client_secret, scope) -> str | None:
 
     try:
@@ -168,13 +167,6 @@ if __name__ == '__main__':
         print(f"error loading the settings for the mail connection")
         sys.exit(1)
 
-    # load the email template
-    template_file_path = os.path.join(template_dir, 'download_report.html')
-    
-    with open(template_file_path, 'r') as template_file:
-        email_template = Template(template_file.read())
-
-
     ssh_client = SSHClient()
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
@@ -186,7 +178,6 @@ if __name__ == '__main__':
         with ssh_client.open_sftp() as sftp:
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
             message = ""
-            rows_html = ""
             rows_data = []
             for file in files:
                 # Filter out directories; only download files
@@ -202,10 +193,7 @@ if __name__ == '__main__':
                     sftp.get(remote_file_path, local_file_path)
                     os.utime(local_file_path, (remote_atime, remote_mtime))  # Set local file's access and modification times
                     modified = datetime.fromtimestamp(file.st_mtime)
-                    #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
                     message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
-                    # rows_html += f"<tr><td>{file.filename}</td><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n"
-                    # rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{file.filename}</td><td style="padding: 12px 16px; color: #6b7280;">{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n'
                     row_data = {"file_name": file.filename, "modified": modified.strftime('%Y-%m-%d %H:%M:%S')}
                     rows_data.append(row_data)
 
@@ -226,18 +214,20 @@ if __name__ == '__main__':
 
     
     # send the report via msgraph api
+    # load the email template
+    template_file_path = os.path.join(template_dir, 'download_report.html')    
+    with open(template_file_path, 'r') as template_file:
+        email_template = Template(template_file.read())
 
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
-
 
     scopes = [mail_config['scope']] # scope has to be an array
     token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
     if token is None:
         print("Error getting Access Token:\n", token)
         sys.exit(1)
-    
-    
+        
     # build the message body
     rows_html = ""
     for row in rows_data:
@@ -249,7 +239,6 @@ if __name__ == '__main__':
     }
 
     rendered_html = email_template.substitute(data)
-
 
     email_payload = {
         "message": {
