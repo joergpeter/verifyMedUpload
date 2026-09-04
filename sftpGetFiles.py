@@ -224,12 +224,6 @@ if __name__ == '__main__':
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
 
-    data = {
-        'title': subject,
-    }
-
-    rendered_html = email_template.substitute(data)
-    message = rendered_html + "\n\n"
 
     scopes = [mail_config['scope']] # scope has to be an array
     token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
@@ -238,6 +232,13 @@ if __name__ == '__main__':
         sys.exit(1)
     
     
+    '''
+    data = {
+        'title': subject,
+    }
+
+    rendered_html = email_template.substitute(data)
+    message = rendered_html + "\n\n"
 
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
     # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
@@ -246,6 +247,7 @@ if __name__ == '__main__':
         print(f"\nEmail sent successfully")
     else:
         print(f"\nERROR sending Email")
+    '''
 
 
     data = {
