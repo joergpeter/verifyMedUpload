@@ -126,7 +126,12 @@ def _send_mail(sender, recipient, subject, content, access_token, content_type="
 
 
 if __name__ == '__main__':
-    
+
+    begin_datetime = datetime.now()
+    now_string = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #print(f"\n[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] starting...\n")
+
+
     # get the ftp connection settings
     properties = ['title', 'hostname', 'username', 'password', 'remotepath', 'sshHostKeyFingerprint']
     try:
@@ -148,20 +153,21 @@ if __name__ == '__main__':
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
     try:
-        print(f"connecting {config['hostname']}...")
+        print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] connecting {config['hostname']}...")
         ssh_client.connect(hostname=config['hostname'], port=22, username=config['username'], password=config['password'])
-        print("successfully connected")
+        #print("successfully connected")
 
         with ssh_client.open_sftp() as sftp:
             #files = sftp.listdir("/")
             #files = sftp.listdir_attr("/")
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
-            message = ""
+            message = []
             for file in files:
                 #print(f" {file}")
                 modified = datetime.fromtimestamp(file.st_mtime)
                 #print(f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}")
-                message = message + f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
+                message.append(f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}")
+                #message = message + f"{modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
 
     except paramiko.AuthenticationException:
         print("Authentication failed, please check your credentials.")
@@ -173,10 +179,13 @@ if __name__ == '__main__':
     finally:
         if ssh_client:
             ssh_client.close()
-            print("\nSSH connection closed.")
-    
-    print("\nremote files:\n")
-    print(message)
+            #print("\nSSH connection closed.")
+            print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] remote files:")
+            print(f"    file_created        | file_name")
+            for line in message:
+                print(f"    {line}")
+            
+            #print(message)
 
     
     # send the report via msgraph api
@@ -189,9 +198,12 @@ if __name__ == '__main__':
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     subject = f"Medbase verification of Mailbox Inventory sFTP Upload {formatted_datetime}"
+    email_content_txt = f"files on ftp host:   \r\n"
+    for line in message:
+        email_content_txt = email_content_txt + f"{line}  \r\n"
     # OK: success = _send_mail(sender="joerg.peter@mexnet.ch", recipient="joerg.peter@peter-it.ch", subject=subject, content=message, access_token=token, content_type="Text")
-    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=message, access_token=token, content_type="Text")
+    success = _send_mail(sender="joerg.peter@peter-it.ch", recipient="joerg.peter@mexnet.ch", subject=subject, content=email_content_txt, access_token=token, content_type="Text")
     if (success == True):
-        print(f"\nEmail sent successfully")
+        print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Report sent successfully")
     else:
-        print(f"\nERROR sending Email")
+        print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] ERROR sending Email")

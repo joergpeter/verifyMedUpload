@@ -1,5 +1,6 @@
 # Project specific
 config.json
+cron.log
 log
 *.csv
 import
