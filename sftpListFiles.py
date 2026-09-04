@@ -217,6 +217,9 @@ if __name__ == '__main__':
 
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
     subject = f"Medbase Mailbox Inventory sFTP Upload {formatted_datetime}"
+    report_title = f"Medbase Mailbox Inventory sFTP Upload"
+    report_date = formatted_datetime
+
     intro_text = f"the following files were found on the sFTP server {config['hostname']}:"
 
     scopes = [mail_config['scope']] # scope has to be an array
@@ -231,7 +234,8 @@ if __name__ == '__main__':
         rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{row["file_name"]}</td><td style="padding: 12px 16px; color: #6b7280;">{row["modified"]}</td></tr>\n'
 
     data = {
-        'title': subject,
+        'report_title': subject,
+        'report_date': report_date,
         'intro_text': intro_text,
         'table_rows': rows_html
     }
