@@ -161,11 +161,15 @@ if __name__ == '__main__':
                 # Filter out directories; only download files
                 if stat.S_ISREG(file.st_mode):
                     remote_file_path = f"{config['remotepath']}/{file.filename}"
-                    local_file_path = os.path.join(downloads_dir, file.filename)
+                    remote_stat = sftp.stat(remote_file_path)
+                    remote_mtime = remote_stat.st_mtime
+                    remote_atime = remote_stat.st_atime
+                    
                     # delte the file if it already exists
                     if os.path.exists(local_file_path):
                         os.remove(local_file_path)
                     sftp.get(remote_file_path, local_file_path)
+                    os.utime(local_file_path, (remote_atime, remote_mtime))  # Set local file's access and modification times
                     modified = datetime.fromtimestamp(file.st_mtime)
                     message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
 
