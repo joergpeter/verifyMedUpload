@@ -186,6 +186,7 @@ if __name__ == '__main__':
         with ssh_client.open_sftp() as sftp:
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
             message = ""
+            message_data_table = ""
             for file in files:
                 # Filter out directories; only download files
                 if stat.S_ISREG(file.st_mode):
@@ -202,6 +203,8 @@ if __name__ == '__main__':
                     modified = datetime.fromtimestamp(file.st_mtime)
                     #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
                     message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
+                    message_data_table = message_data_table + f"<td>{file.filename}</td><tr><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>"
+                    
 
     except paramiko.AuthenticationException:
         print("Authentication failed, please check your credentials.")
@@ -252,6 +255,7 @@ if __name__ == '__main__':
 
     data = {
         'title': subject,
+        'table_rows': message_data_table
     }
 
     rendered_html = email_template.substitute(data)
