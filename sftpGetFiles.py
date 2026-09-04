@@ -186,7 +186,7 @@ if __name__ == '__main__':
         with ssh_client.open_sftp() as sftp:
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
             message = ""
-            message_data_table = ""
+            rows_html = ""
             for file in files:
                 # Filter out directories; only download files
                 if stat.S_ISREG(file.st_mode):
