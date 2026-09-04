@@ -203,7 +203,8 @@ if __name__ == '__main__':
                     modified = datetime.fromtimestamp(file.st_mtime)
                     #message = message + f"downloaded {file.filename} | {modified.strftime('%Y-%m-%d %H:%M:%S')}  \r\n"
                     message = message + f" {modified.strftime('%Y-%m-%d %H:%M:%S')} | {file.filename}  \r\n"
-                    rows_html += f"<tr><td>{file.filename}</td><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n"
+                    # rows_html += f"<tr><td>{file.filename}</td><td>{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n"
+                    rows_html += f'<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px 16px; color: #6b7280;">{file.filename}</td><td style="padding: 12px 16px; color: #6b7280;">{modified.strftime('%Y-%m-%d %H:%M:%S')}</td></tr>\n'
                     
 
     except paramiko.AuthenticationException:
