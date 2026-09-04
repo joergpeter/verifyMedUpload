@@ -221,6 +221,7 @@ if __name__ == '__main__':
 
     formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
     subject = f"Medbase Mailbox Inventory sFTP Download {formatted_datetime}"
+    intro_text = f"the following files were downloaded from the sFTP server {config['hostname']}:"
 
     scopes = [mail_config['scope']] # scope has to be an array
     token = _get_access_token(tenant_id=mail_config['tenant_id'], client_id=mail_config['client_id'], client_secret=mail_config['client_secret'], scope=scopes)
@@ -235,6 +236,7 @@ if __name__ == '__main__':
 
     data = {
         'title': subject,
+        'intro_text': intro_text,
         'table_rows': rows_html
     }
 
