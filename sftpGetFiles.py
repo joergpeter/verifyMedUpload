@@ -164,7 +164,7 @@ if __name__ == '__main__':
                     remote_stat = sftp.stat(remote_file_path)
                     remote_mtime = remote_stat.st_mtime
                     remote_atime = remote_stat.st_atime
-                    
+                    local_file_path = os.path.join(downloads_dir, file.filename)
                     # delte the file if it already exists
                     if os.path.exists(local_file_path):
                         os.remove(local_file_path)
