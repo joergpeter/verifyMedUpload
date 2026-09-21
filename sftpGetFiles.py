@@ -171,9 +171,8 @@ if __name__ == '__main__':
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
     try:
-        print(f"connecting {config['hostname']}...")
+        print(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] connecting {config['hostname']}...")
         ssh_client.connect(hostname=config['hostname'], port=22, username=config['username'], password=config['password'])
-        print("successfully connected")
 
         with ssh_client.open_sftp() as sftp:
             files = sorted(sftp.listdir_attr(config['remotepath']), key=lambda f: f.st_mtime, reverse=True)
